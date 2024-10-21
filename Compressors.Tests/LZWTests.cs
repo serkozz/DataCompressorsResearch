@@ -1,13 +1,14 @@
 using System.Collections;
-using BenchmarkDotNet.Attributes;
 
-namespace Compressors.Benchmarks
+namespace Compressors.Tests;
+
+public class LZWTests
 {
-    public class HuffmanBenchmarks
+    [Fact]
+    public void LZWCompressor_CompressedAndDecompressedStringsAreEquals()
     {
-        private const string HELLO_WORLD = "Hello world";
-
-        private const string VERY_LONG_STRING = @"Eh bien, mon prince. Gênes et Lucques ne sont plus que des apanages, des поместья, de la famille Buonaparte. Non, je vous préviens que si vous ne me dites pas que nous avons la guerre, si vous vous permettez encore de pallier toutes les infamies, toutes les atrocités de cet Antichrist (ma parole, j'y crois) — je ne vous connais plus, vous n'êtes plus mon ami, vous n'êtes plus мой верный раб, comme vous dites 1. Ну, здравствуйте, здравствуйте. Je vois que je vous fais peur 2, садитесь и рассказывайте.
+        //Arrange
+        string testString = @"Eh bien, mon prince. Gênes et Lucques ne sont plus que des apanages, des поместья, de la famille Buonaparte. Non, je vous préviens que si vous ne me dites pas que nous avons la guerre, si vous vous permettez encore de pallier toutes les infamies, toutes les atrocités de cet Antichrist (ma parole, j'y crois) — je ne vous connais plus, vous n'êtes plus mon ami, vous n'êtes plus мой верный раб, comme vous dites 1. Ну, здравствуйте, здравствуйте. Je vois que je vous fais peur 2, садитесь и рассказывайте.
 Так говорила в июле 1805 года известная Анна Павловна Шерер, фрейлина и приближенная императрицы Марии Феодоровны, встречая важного и чиновного князя Василия, первого приехавшего на ее вечер. Анна Павловна кашляла несколько дней, у нее был грипп, как она говорила (грипп был тогда новое слово, употреблявшееся только редкими). В записочках, разосланных утром с красным лакеем, было написано без различия во всех:
 «Si vous n'avez rien de mieux à faire, Monsieur le comte (или mon prince), et si la perspective de passer la soirée chez une pauvre malade ne vous effraye pas trop, je serai charmée de vous voir chez moi entre 7 et 10 heures. Annette Scherer» 3.
 — Dieu, quelle virulente sortie! 4 — отвечал, нисколько не смутясь такою встречей, вошедший князь, в придворном, шитом мундире, в чулках, башмаках и звездах, с светлым выражением плоского лица.
@@ -48,38 +49,15 @@ namespace Compressors.Benchmarks
 И он с теми свободными и фамильярными грациозными движениями, которые его отличали, взял за руку фрейлину, поцеловал ее и, поцеловав, помахал фрейлинскою рукой, развалившись на креслах и глядя в сторону.
 — Attendez 27, — сказала Анна Павловна, соображая. — Я нынче же поговорю Lise (la femme du jeune Болконский) 28. И, может быть, это уладится. Ce sera dans votre famille que je ferai mon apprentissage de vieille fille";
 
-        private readonly HuffmanCompresor __compressor = new();
+        //Act
+        List<int> encodedData = LZWCompressor.Compress(testString);
+        string decodedString = LZWCompressor.Decompress(encodedData);
 
-        private readonly BitArray __compressedHelloWorld = new HuffmanCompresor().Build(HELLO_WORLD).Compress(HELLO_WORLD);
+        var decodedStringByteCount = (float)(decodedString.Length * sizeof(char));
+        var encodedStringByteCount = (float)(encodedData.Count * sizeof(int));
 
-        private readonly BitArray __compressedVeryLongString = new HuffmanCompresor().Build(VERY_LONG_STRING).Compress(VERY_LONG_STRING);
-
-        [Benchmark]
-        public void Huffman_Compression_HelloWorldString()
-        {
-            __compressor.Build(HELLO_WORLD);
-            __compressor.Compress(HELLO_WORLD);
-        }
-
-        [Benchmark]
-        public void Huffman_Compression_VeryLongString()
-        {
-            __compressor.Build(VERY_LONG_STRING);
-            __compressor.Compress(VERY_LONG_STRING);
-        }
-
-        [Benchmark]
-        public void Huffman_Decompression_HelloWorldString()
-        {
-            __compressor.Build(HELLO_WORLD);
-            __compressor.Decompress(__compressedHelloWorld);
-        }
-
-        [Benchmark]
-        public void Huffman_Decompression_VeryLongString()
-        {
-            __compressor.Build(VERY_LONG_STRING);
-            __compressor.Decompress(__compressedVeryLongString);
-        }
+        var compressionRatio =  decodedStringByteCount / encodedStringByteCount;
+        //Assert
+        Assert.Equal(testString, decodedString);
     }
 }
