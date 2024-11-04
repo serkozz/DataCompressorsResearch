@@ -1,12 +1,11 @@
-using System.Collections;
 using System.Text;
 
 namespace Compressors.Tests;
 
 public class HuffmanTests
 {
-    [Fact]
-    public void EnglishASCIICompatible_ShouldCompressWith1_2RatioAtLeast()
+    [Theory, Repeat(100)]
+    public void EnglishASCIICompatible_ShouldCompressWith1_2RatioAtLeast(int count)
     {
         StringBuilder sb = new(100_000);
         foreach (char c in Enumerable.Range(0, 100_000).Select((i) => (char)Random.Shared.Next(97, 123)))
@@ -33,8 +32,8 @@ public class HuffmanTests
         Assert.True(compressionRatio > 1.2f);
     }
 
-    [Fact]
-    public void AllASCIICompatible_ShouldCompressWith1_2RatioAtLeast()
+    [Theory, Repeat(100)]
+    public void AllASCIICompatible_ShouldCompressWith1_2RatioAtLeast(int count)
     {
         StringBuilder sb = new(100_000);
         foreach (char c in Enumerable.Range(0, 100_000).Select((i) => (char)Random.Shared.Next(32, 127)))

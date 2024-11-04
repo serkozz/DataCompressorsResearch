@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Text;
 using BenchmarkDotNet.Attributes;
 
 namespace Compressors.Benchmarks
@@ -48,37 +49,33 @@ namespace Compressors.Benchmarks
 И он с теми свободными и фамильярными грациозными движениями, которые его отличали, взял за руку фрейлину, поцеловал ее и, поцеловав, помахал фрейлинскою рукой, развалившись на креслах и глядя в сторону.
 — Attendez 27, — сказала Анна Павловна, соображая. — Я нынче же поговорю Lise (la femme du jeune Болконский) 28. И, может быть, это уладится. Ce sera dans votre famille que je ferai mon apprentissage de vieille fille";
 
-        private readonly HuffmanCompresor __compressor = new();
+        private readonly HuffmanCompressor __compressor = new();
 
-        private readonly BitArray __compressedHelloWorld = new HuffmanCompresor().Build(HELLO_WORLD).Compress(HELLO_WORLD);
+        private readonly byte[] __compressedHelloWorld = new HuffmanCompressor().Compress(Encoding.UTF8.GetBytes(HELLO_WORLD));
 
-        private readonly BitArray __compressedVeryLongString = new HuffmanCompresor().Build(VERY_LONG_STRING).Compress(VERY_LONG_STRING);
+        private readonly byte[] __compressedVeryLongString = new HuffmanCompressor().Compress(Encoding.UTF8.GetBytes(VERY_LONG_STRING));
 
         [Benchmark]
         public void Huffman_Compression_HelloWorldString()
         {
-            __compressor.Build(HELLO_WORLD);
-            __compressor.Compress(HELLO_WORLD);
+            __compressor.Compress(Encoding.UTF8.GetBytes(HELLO_WORLD));
         }
 
         [Benchmark]
         public void Huffman_Compression_VeryLongString()
         {
-            __compressor.Build(VERY_LONG_STRING);
-            __compressor.Compress(VERY_LONG_STRING);
+            __compressor.Compress(Encoding.UTF8.GetBytes(VERY_LONG_STRING));
         }
 
         [Benchmark]
         public void Huffman_Decompression_HelloWorldString()
         {
-            __compressor.Build(HELLO_WORLD);
             __compressor.Decompress(__compressedHelloWorld);
         }
 
         [Benchmark]
         public void Huffman_Decompression_VeryLongString()
         {
-            __compressor.Build(VERY_LONG_STRING);
             __compressor.Decompress(__compressedVeryLongString);
         }
     }

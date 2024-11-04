@@ -1,23 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 
 namespace Compressors
 {
-    public class HuffmanCompressor
+    public class HuffmanCompressor : ICompressor
     {
         private class Node
         {
             public byte Symbol { get; set; }
             public int Frequency { get; set; }
-            public Node Left { get; set; }
-            public Node Right { get; set; }
+            public Node? Left { get; set; }
+            public Node? Right { get; set; }
 
             public bool IsLeaf => Left == null && Right == null;
         }
 
-        private readonly Dictionary<byte, string> encodingTable = [];
+        private readonly Dictionary<byte, string> encodingTable = new Dictionary<byte, string>();
 
         public byte[] Compress(byte[] input)
         {
@@ -81,6 +78,9 @@ namespace Compressors
                 encodedData.Append(encodingTable[b]);
             }
 
+            // Track the length of the encoded data in bits
+            int bitLength = encodedData.Length;
+
             // Convert encoded string to byte array
             var bitList = new List<byte>();
             for (int i = 0; i < encodedData.Length; i += 8)
@@ -89,17 +89,27 @@ namespace Compressors
                 bitList.Add(Convert.ToByte(byteString, 2));
             }
 
-            return [.. bitList];
+            // Create a final byte array with bit length information as a header
+            using var ms = new MemoryStream();
+            // Add the bit length as a 4-byte header (int32)
+            ms.Write(BitConverter.GetBytes(bitLength), 0, 4);
+            // Add the encoded data
+            ms.Write([.. bitList], 0, bitList.Count);
+            return ms.ToArray();
         }
 
         public byte[] Decompress(byte[] compressedData)
         {
-            // Convert compressed byte array to binary string
+            // Read bit length from the first 4 bytes
+            int bitLength = BitConverter.ToInt32(compressedData, 0);
+
+            // Convert compressed byte array to binary string, ignoring extra bits
             var binaryData = new StringBuilder();
-            foreach (var b in compressedData)
+            for (int i = 4; i < compressedData.Length; i++)
             {
-                binaryData.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
+                binaryData.Append(Convert.ToString(compressedData[i], 2).PadLeft(8, '0'));
             }
+            binaryData.Length = bitLength; // Truncate to the actual bit length
 
             // Traverse Huffman Tree to decode
             var result = new List<byte>();
@@ -109,8 +119,7 @@ namespace Compressors
             foreach (var bit in binaryData.ToString())
             {
                 currentNode = bit == '0' ? currentNode.Left : currentNode.Right;
-
-                if (currentNode.IsLeaf)
+                if (currentNode!.IsLeaf)
                 {
                     result.Add(currentNode.Symbol);
                     currentNode = root;

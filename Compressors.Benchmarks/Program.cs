@@ -1,4 +1,4 @@
 ﻿using BenchmarkDotNet.Running;
 using Compressors.Benchmarks;
 
-BenchmarkRunner.Run([typeof(HuffmanBenchmarks), typeof(LZWBenchmarks)]);
+BenchmarkRunner.Run([typeof(HuffmanBenchmarks)]);
