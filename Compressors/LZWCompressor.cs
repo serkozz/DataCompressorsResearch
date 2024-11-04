@@ -1,81 +1,84 @@
 using System.Text;
 
-public class LZWCompressor
+namespace Compressors
 {
-    public static List<int> Compress(string input)
+    public class LZWCompressor
     {
-        // Initialize the dictionary with single-character strings
-        Dictionary<string, int> dictionary = [];
-        for (int i = 0; i < char.MaxValue; i++)
+        public static List<int> Compress(string input)
         {
-            dictionary.Add(((char)i).ToString(), i);
-        }
-
-        string current = string.Empty;
-        List<int> compressed = [];
-
-        foreach (char symbol in input)
-        {
-            string combined = current + symbol;
-            if (dictionary.ContainsKey(combined))
+            // Initialize the dictionary with single-character strings
+            Dictionary<string, int> dictionary = [];
+            for (int i = 0; i < char.MaxValue; i++)
             {
-                current = combined;
+                dictionary.Add(((char)i).ToString(), i);
             }
-            else
+
+            string current = string.Empty;
+            List<int> compressed = [];
+
+            foreach (char symbol in input)
+            {
+                string combined = current + symbol;
+                if (dictionary.ContainsKey(combined))
+                {
+                    current = combined;
+                }
+                else
+                {
+                    compressed.Add(dictionary[current]);
+                    dictionary.Add(combined, dictionary.Count);
+                    current = symbol.ToString();
+                }
+            }
+
+            // Add the last string to the compressed list
+            if (!string.IsNullOrEmpty(current))
             {
                 compressed.Add(dictionary[current]);
-                dictionary.Add(combined, dictionary.Count);
-                current = symbol.ToString();
             }
+
+            return compressed;
         }
 
-        // Add the last string to the compressed list
-        if (!string.IsNullOrEmpty(current))
+        public static string Decompress(List<int> compressed)
         {
-            compressed.Add(dictionary[current]);
-        }
-
-        return compressed;
-    }
-
-    public static string Decompress(List<int> compressed)
-    {
-        // Initialize the dictionary with single-character strings
-        Dictionary<int, string> dictionary = [];
-        for (int i = 0; i < char.MaxValue; i++)
-        {
-            dictionary.Add(i, ((char)i).ToString());
-        }
-
-        string current = dictionary[compressed[0]];
-        StringBuilder decompressed = new(current);
-
-        for (int i = 1; i < compressed.Count; i++)
-        {
-            string entry;
-            int code = compressed[i];
-
-            if (dictionary.TryGetValue(code, out string? value))
+            // Initialize the dictionary with single-character strings
+            Dictionary<int, string> dictionary = [];
+            for (int i = 0; i < char.MaxValue; i++)
             {
-                entry = value;
-            }
-            else if (code == dictionary.Count)
-            {
-                entry = current + current[0];
-            }
-            else
-            {
-                throw new Exception("Invalid compressed code.");
+                dictionary.Add(i, ((char)i).ToString());
             }
 
-            decompressed.Append(entry);
+            string current = dictionary[compressed[0]];
+            StringBuilder decompressed = new(current);
 
-            // Add new entry to the dictionary
-            dictionary.Add(dictionary.Count, current + entry[0]);
+            for (int i = 1; i < compressed.Count; i++)
+            {
+                string entry;
+                int code = compressed[i];
 
-            current = entry;
+                if (dictionary.TryGetValue(code, out string? value))
+                {
+                    entry = value;
+                }
+                else if (code == dictionary.Count)
+                {
+                    entry = current + current[0];
+                }
+                else
+                {
+                    throw new Exception("Invalid compressed code.");
+                }
+
+                decompressed.Append(entry);
+
+                // Add new entry to the dictionary
+                dictionary.Add(dictionary.Count, current + entry[0]);
+
+                current = entry;
+            }
+
+            return decompressed.ToString();
         }
-
-        return decompressed.ToString();
     }
 }

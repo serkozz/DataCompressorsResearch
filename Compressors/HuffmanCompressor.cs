@@ -1,130 +1,148 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
-namespace Compressors;
-
-public class HuffmanCompresor
+namespace Compressors
 {
-    private class HuffmanNode
+    public class HuffmanCompressor
     {
-        public char Symbol { get; set; }
-        public int Frequency { get; set; }
-        public HuffmanNode? Left { get; set; }
-        public HuffmanNode? Right { get; set; }
-
-        public List<bool>? Traverse(char symbol, List<bool> data)
+        private class Node
         {
-            if (Right == null && Left == null)
-            {
-                if (symbol == Symbol)
-                {
-                    return data;
-                }
-                return null;            
-            }
-            else
-            {
-                List<bool>? leftPath = null, rightPath = null;
-                if (Left != null)
-                {
-                    List<bool> left = new(data) { false };
-                    leftPath = Left?.Traverse(symbol, left);
-                }
-                if (Right != null)
-                {
-                    List<bool> right = new(data) { true };
-                    rightPath = Right?.Traverse(symbol, right);
-                }
-                return leftPath ?? rightPath;
-            }
-        }
-    }
+            public byte Symbol { get; set; }
+            public int Frequency { get; set; }
+            public Node Left { get; set; }
+            public Node Right { get; set; }
 
-    private List<HuffmanNode> Nodes = [];
-    private HuffmanNode? Root { get; set; }
-    private Dictionary<char, int> Frequencies = [];
-
-    public HuffmanCompresor Build(string source)
-    {
-        Frequencies = [];
-        Root = null;
-        Nodes = [];
-
-        // Calculate frequency of each symbol
-        for (int i = 0; i < source.Length; i++)
-        {
-            if (!Frequencies.TryGetValue(source[i], out int value))
-            {
-                value = 0;
-                Frequencies[source[i]] = value;
-            }
-            Frequencies[source[i]] = ++value;
+            public bool IsLeaf => Left == null && Right == null;
         }
 
-        // Build nodes from frequencies
-        foreach (var symbol in Frequencies)
-        {
-            Nodes.Add(new HuffmanNode() { Symbol = symbol.Key, Frequency = symbol.Value });
-        }
+        private readonly Dictionary<byte, string> encodingTable = [];
 
-        // Build the tree
-        while (Nodes.Count > 1)
+        public byte[] Compress(byte[] input)
         {
-            List<HuffmanNode> orderedNodes = [.. Nodes.OrderBy(node => node.Frequency)];
-
-            if (orderedNodes.Count >= 2)
+            // Count frequency of each byte
+            var frequencies = new Dictionary<byte, int>();
+            foreach (var b in input)
             {
-                // Take first two items
-                HuffmanNode left = orderedNodes[0];
-                HuffmanNode right = orderedNodes[1];
+                if (!frequencies.ContainsKey(b))
+                    frequencies[b] = 0;
+                frequencies[b]++;
+            }
 
-                // Create new node with these two
-                HuffmanNode parent = new()
+            // Create priority queue for building the Huffman tree
+            var priorityQueue = new List<Node>();
+            foreach (var kvp in frequencies)
+            {
+                priorityQueue.Add(new Node { Symbol = kvp.Key, Frequency = kvp.Value });
+            }
+            priorityQueue.Sort((a, b) => a.Frequency - b.Frequency);
+
+            // Build Huffman Tree
+            while (priorityQueue.Count > 1)
+            {
+                var left = priorityQueue[0];
+                var right = priorityQueue[1];
+                priorityQueue.RemoveRange(0, 2);
+                var parent = new Node
                 {
-                    Symbol = '*', // Placeholder symbol for non-leaf nodes
                     Frequency = left.Frequency + right.Frequency,
                     Left = left,
                     Right = right
                 };
-
-                Nodes.Remove(left);
-                Nodes.Remove(right);
-                Nodes.Add(parent);
+                priorityQueue.Add(parent);
+                priorityQueue.Sort((a, b) => a.Frequency - b.Frequency);
             }
-            Root = Nodes.FirstOrDefault();
-        }
-        return this;
-    }
+            var root = priorityQueue[0];
 
-    public BitArray Compress(string source)
-    {
-        List<bool> encodedSource = [];
-
-        for (int i = 0; i < source.Length; i++)
-        {
-            List<bool>? encodedSymbol = Root?.Traverse(source[i], []);
-            encodedSource.AddRange(encodedSymbol!);
-        }
-
-        BitArray bits = new(encodedSource.ToArray());
-        return bits;
-    }
-
-    public string Decompress(BitArray bits)
-    {
-        HuffmanNode? current = Root;
-        string decoded = "";
-
-        foreach (bool bit in bits)
-        {
-            current = bit ? current?.Right : current?.Left;
-
-            // If leaf node
-            if (current?.Left == null && current?.Right == null)
+            // Build encoding table using iterative tree traversal
+            var stack = new Stack<(Node, string)>();
+            stack.Push((root, ""));
+            while (stack.Count > 0)
             {
-                decoded += current?.Symbol;
-                current = Root;
+                var (node, path) = stack.Pop();
+                if (node.IsLeaf)
+                {
+                    encodingTable[node.Symbol] = path;
+                }
+                else
+                {
+                    if (node.Right != null)
+                        stack.Push((node.Right, path + "1"));
+                    if (node.Left != null)
+                        stack.Push((node.Left, path + "0"));
+                }
             }
+
+            // Encode input data
+            var encodedData = new StringBuilder();
+            foreach (var b in input)
+            {
+                encodedData.Append(encodingTable[b]);
+            }
+
+            // Convert encoded string to byte array
+            var bitList = new List<byte>();
+            for (int i = 0; i < encodedData.Length; i += 8)
+            {
+                var byteString = encodedData.ToString(i, Math.Min(8, encodedData.Length - i)).PadRight(8, '0');
+                bitList.Add(Convert.ToByte(byteString, 2));
+            }
+
+            return [.. bitList];
         }
-        return decoded;
+
+        public byte[] Decompress(byte[] compressedData)
+        {
+            // Convert compressed byte array to binary string
+            var binaryData = new StringBuilder();
+            foreach (var b in compressedData)
+            {
+                binaryData.Append(Convert.ToString(b, 2).PadLeft(8, '0'));
+            }
+
+            // Traverse Huffman Tree to decode
+            var result = new List<byte>();
+            var root = BuildHuffmanTree();
+            var currentNode = root;
+
+            foreach (var bit in binaryData.ToString())
+            {
+                currentNode = bit == '0' ? currentNode.Left : currentNode.Right;
+
+                if (currentNode.IsLeaf)
+                {
+                    result.Add(currentNode.Symbol);
+                    currentNode = root;
+                }
+            }
+
+            return [.. result];
+        }
+
+        private Node BuildHuffmanTree()
+        {
+            // Rebuild the Huffman tree from encoding table (for decompression)
+            var root = new Node();
+            foreach (var kvp in encodingTable)
+            {
+                var currentNode = root;
+                foreach (var bit in kvp.Value)
+                {
+                    if (bit == '0')
+                    {
+                        currentNode.Left ??= new Node();
+                        currentNode = currentNode.Left;
+                    }
+                    else
+                    {
+                        currentNode.Right ??= new Node();
+                        currentNode = currentNode.Right;
+                    }
+                }
+                currentNode.Symbol = kvp.Key;
+            }
+            return root;
+        }
     }
 }
