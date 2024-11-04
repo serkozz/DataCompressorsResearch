@@ -26,7 +26,7 @@ public class HuffmanTests
         var decodedData = compressor.Decompress(encodedData);
         var decodedString = Encoding.UTF8.GetString(decodedData);
 
-        var compressionRatio = decodedData.Length / (float)encodedData.Length;
+        var compressionRatio = data.Length / (float)encodedData.Length;
 
         Assert.Equal(testString, decodedString);
         Assert.True(compressionRatio > 1.2f);
@@ -54,7 +54,7 @@ public class HuffmanTests
         var decodedData = compressor.Decompress(encodedData);
         var decodedString = Encoding.UTF8.GetString(decodedData);
 
-        var compressionRatio = decodedData.Length / (float)encodedData.Length;
+        var compressionRatio = data.Length / (float)encodedData.Length;
 
         Assert.True(testString == decodedString && compressionRatio > 1.2f);
     }
