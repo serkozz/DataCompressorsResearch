@@ -1,9 +1,8 @@
-using System.Collections;
 using BenchmarkDotNet.Attributes;
 
 namespace Compressors.Benchmarks
 {
-    public class HuffmanBenchmarks
+    public class LZWBenchmarks
     {
         private const string HELLO_WORLD = "Hello world";
 
@@ -48,38 +47,35 @@ namespace Compressors.Benchmarks
 И он с теми свободными и фамильярными грациозными движениями, которые его отличали, взял за руку фрейлину, поцеловал ее и, поцеловав, помахал фрейлинскою рукой, развалившись на креслах и глядя в сторону.
 — Attendez 27, — сказала Анна Павловна, соображая. — Я нынче же поговорю Lise (la femme du jeune Болконский) 28. И, может быть, это уладится. Ce sera dans votre famille que je ferai mon apprentissage de vieille fille";
 
-        private readonly HuffmanCompresor __compressor = new();
+        private readonly List<int> __compressedHelloWorld = LZWCompressor.Compress(HELLO_WORLD);
 
-        private readonly BitArray __compressedHelloWorld = new HuffmanCompresor().Build(HELLO_WORLD).Compress(HELLO_WORLD);
-
-        private readonly BitArray __compressedVeryLongString = new HuffmanCompresor().Build(VERY_LONG_STRING).Compress(VERY_LONG_STRING);
+        private readonly List<int> __compressedVeryLongString = LZWCompressor.Compress(VERY_LONG_STRING);
 
         [Benchmark]
-        public void Huffman_Compression_HelloWorldString()
+#pragma warning disable CA1822 // Mark members as static
+        public void LZW_Compression_HelloWorldString()
+
         {
-            __compressor.Build(HELLO_WORLD);
-            __compressor.Compress(HELLO_WORLD);
+            _ = LZWCompressor.Compress(HELLO_WORLD);
         }
 
         [Benchmark]
-        public void Huffman_Compression_VeryLongString()
+        public void LZW_Compression_VeryLongString()
         {
-            __compressor.Build(VERY_LONG_STRING);
-            __compressor.Compress(VERY_LONG_STRING);
+            _ = LZWCompressor.Compress(VERY_LONG_STRING);
         }
 
         [Benchmark]
-        public void Huffman_Decompression_HelloWorldString()
+        public void LZW_Decompression_HelloWorldString()
         {
-            __compressor.Build(HELLO_WORLD);
-            __compressor.Decompress(__compressedHelloWorld);
+            _ = LZWCompressor.Decompress(__compressedHelloWorld);
         }
 
         [Benchmark]
-        public void Huffman_Decompression_VeryLongString()
+        public void LZW_Decompression_VeryLongString()
         {
-            __compressor.Build(VERY_LONG_STRING);
-            __compressor.Decompress(__compressedVeryLongString);
+            _ = LZWCompressor.Decompress(__compressedVeryLongString);
         }
+#pragma warning restore CA1822 // Mark members as static
     }
 }

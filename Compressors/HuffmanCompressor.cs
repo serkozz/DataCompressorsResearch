@@ -39,12 +39,16 @@ public class HuffmanCompresor
         }
     }
 
-    private readonly List<HuffmanNode> Nodes = [];
+    private List<HuffmanNode> Nodes = [];
     private HuffmanNode? Root { get; set; }
-    private readonly Dictionary<char, int> Frequencies = [];
+    private Dictionary<char, int> Frequencies = [];
 
-    public void Build(string source)
+    public HuffmanCompresor Build(string source)
     {
+        Frequencies = [];
+        Root = null;
+        Nodes = [];
+
         // Calculate frequency of each symbol
         for (int i = 0; i < source.Length; i++)
         {
@@ -88,9 +92,10 @@ public class HuffmanCompresor
             }
             Root = Nodes.FirstOrDefault();
         }
+        return this;
     }
 
-    public BitArray Encode(string source)
+    public BitArray Compress(string source)
     {
         List<bool> encodedSource = [];
 
@@ -104,7 +109,7 @@ public class HuffmanCompresor
         return bits;
     }
 
-    public string Decode(BitArray bits)
+    public string Decompress(BitArray bits)
     {
         HuffmanNode? current = Root;
         string decoded = "";

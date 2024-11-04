@@ -8,7 +8,9 @@ Intel Core i5-8300H CPU 2.30GHz (Coffee Lake), 1 CPU, 8 logical and 4 physical c
 
 
 ```
-| Method                   | Mean           | Error       | StdDev      | Median         |
-|------------------------- |---------------:|------------:|------------:|---------------:|
-| Huffman_HelloWorldString |       7.262 μs |   0.1432 μs |   0.2619 μs |       7.140 μs |
-| Huffman_VeryLongString   | 102,553.955 μs | 778.3388 μs | 728.0586 μs | 102,559.540 μs |
+| Method                                 | Mean           | Error       | StdDev      |
+|--------------------------------------- |---------------:|------------:|------------:|
+| Huffman_Compression_HelloWorldString   |      12.134 μs |   0.2148 μs |   0.1904 μs |
+| Huffman_Compression_VeryLongString     | 170,652.715 μs | 808.5533 μs | 675.1786 μs |
+| Huffman_Decompression_HelloWorldString |       3.544 μs |   0.0089 μs |   0.0079 μs |
+| Huffman_Decompression_VeryLongString   |  15,040.399 μs | 295.6142 μs | 547.9399 μs |
